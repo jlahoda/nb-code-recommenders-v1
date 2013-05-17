@@ -134,7 +134,15 @@ public class RecommenderCodeCompletion extends AsyncCompletionQuery {
                 });
 
                 int priority = 0;
-                
+                int substitutionOffset = caretOffset;
+                String prefix = "";
+                int[] nameSpan = info.getTreeUtilities().findNameSpan(mst);
+
+                if (nameSpan != null && nameSpan[0] != (-1)) {
+                    substitutionOffset = nameSpan[0];
+                    prefix = mst.getIdentifier().toString();
+                }
+
                 // query the recommender:
                 for (Recommendation<IMethodName> r : recommendations) {
                     ExecutableElement method = resolveMethod(info, r.getProposal());
@@ -143,8 +151,10 @@ public class RecommenderCodeCompletion extends AsyncCompletionQuery {
                         LOG.log(Level.INFO, "Cannot resolve {0}.", r.toString());
                         continue;
                     }
+
+                    if (!method.getSimpleName().toString().startsWith(prefix)) continue;
                     
-                    JavaCompletionItem i = JavaCompletionItem.createExecutableItem(info, method, (ExecutableType) method.asType()/*XXX*/, caretOffset, null, false, false, false, false, false, -1, false, null);
+                    JavaCompletionItem i = JavaCompletionItem.createExecutableItem(info, method, (ExecutableType) method.asType()/*XXX*/, substitutionOffset, null, false, false, false, false, false, -1, false, null);
 
                     result.add(new MethodCompletionItem(i, r.getRelevance(), priority++));
                 }

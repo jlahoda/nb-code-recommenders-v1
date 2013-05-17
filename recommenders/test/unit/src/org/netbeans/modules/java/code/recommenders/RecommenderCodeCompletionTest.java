@@ -36,7 +36,7 @@ public class RecommenderCodeCompletionTest extends TestCase {
         super(testName);
     }
 
-    public void testQuery() throws Exception {
+    public void testQuery1() throws Exception {
         HintTest.create()
                 .input("package test;\n" +
                        "public class Test {\n" +
@@ -50,12 +50,45 @@ public class RecommenderCodeCompletionTest extends TestCase {
                                 "0:0-0:0:verifier:public boolean equals(Object o)");
     }
 
+    public void testQuery2() throws Exception {
+        HintTest.create()
+                .input("package test;\n" +
+                       "public class Test {\n" +
+                       "    private void t(String str) {\n" +
+                       "        str.le/*CARET*/\n" +
+                       "    }\n" +
+                       "}\n",
+                       false)
+                .run(RecommenderCodeCompletionTest.class)
+                .assertWarnings("0:0-0:0:verifier:public int length()");
+    }
+
     public void testApply1() throws Exception {
         HintTest.create()
                 .input("package test;\n" +
                        "public class Test {\n" +
                        "    private void t(String str) {\n" +
                        "        str./*CARET*/\n" +
+                       "    }\n" +
+                       "}\n",
+                       false)
+                .run(RecommenderCodeCompletionTest.class)
+                .findWarning("0:0-0:0:verifier:public int length()")
+                .applyFix()
+                .assertVerbatimOutput("package test;\n" +
+                                      "public class Test {\n" +
+                                      "    private void t(String str) {\n" +
+                                      "        str.length()/*CARET*/\n" +
+                                      "    }\n" +
+                                      "}\n");
+    }
+
+    public void testApply2() throws Exception {
+        HintTest.create()
+                .input("package test;\n" +
+                       "public class Test {\n" +
+                       "    private void t(String str) {\n" +
+                       "        str.le/*CARET*/\n" +
                        "    }\n" +
                        "}\n",
                        false)
