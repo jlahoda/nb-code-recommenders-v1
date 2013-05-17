@@ -116,7 +116,6 @@ public class RecommenderCodeCompletionTest extends TestCase {
         component.setCaretPosition(caretLocation);
 
         File dataZip = new File("../../../../../lib/release/modules/data/jre-1.0.0-call.zip");
-        System.err.println(dataZip.getAbsolutePath());
         RecommenderCodeCompletion rcc = new RecommenderCodeCompletion(new ZipFile(dataZip));
         List<ErrorDescription> result = new ArrayList<>();
 
