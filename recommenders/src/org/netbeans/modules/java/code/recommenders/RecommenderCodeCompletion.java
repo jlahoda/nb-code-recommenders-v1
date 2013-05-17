@@ -83,9 +83,8 @@ public class RecommenderCodeCompletion extends AsyncCompletionQuery {
             js.runUserActionTask(new Task<CompilationController>() {
                 @Override public void run(CompilationController parameter) throws Exception {
                     parameter.toPhase(Phase.RESOLVED); //XXX: should check the content and prevent attribution if possible
-                    TreePath pathFor = parameter.getTreeUtilities().pathFor(caretOffset);
 
-                    resolveCodeCompletion(parameter, pathFor, caretOffset, resultSet);
+                    resolveCodeCompletion(parameter, caretOffset, resultSet);
                 }
             }, true);
         } catch (IOException ex) {
@@ -95,7 +94,14 @@ public class RecommenderCodeCompletion extends AsyncCompletionQuery {
         }
     }
 
-    private void resolveCodeCompletion(CompilationInfo info, TreePath path, int subtitutionOffset, CompletionResultSet resultSet) throws Exception {
+    private void resolveCodeCompletion(CompilationInfo info, int caretOffset, CompletionResultSet resultSet) throws Exception {
+        resultSet.addAllItems(resolveCodeCompletion(info, caretOffset));
+    }
+
+    List<CompletionItem> resolveCodeCompletion(CompilationInfo info, int caretOffset) throws Exception {
+        List<CompletionItem> result = new ArrayList<>();
+        TreePath path = info.getTreeUtilities().pathFor(caretOffset);
+
         switch (path.getLeaf().getKind()) {
             case MEMBER_SELECT:
                 MemberSelectTree mst = (MemberSelectTree) path.getLeaf();
@@ -106,7 +112,7 @@ public class RecommenderCodeCompletion extends AsyncCompletionQuery {
                 ZipEntry entry = zip.getEntry(Zips.path(typeName, ".data"));
 
                 if (entry == null) {
-                    return ;
+                    return result;
                 }
 
                 BayesianNetwork bayesNet = BayesianNetwork.read(zip.getInputStream(entry));
@@ -138,11 +144,13 @@ public class RecommenderCodeCompletion extends AsyncCompletionQuery {
                         continue;
                     }
                     
-                    JavaCompletionItem i = JavaCompletionItem.createExecutableItem(info, method, (ExecutableType) method.asType()/*XXX*/, subtitutionOffset, null, false, false, false, false, false, -1, false, null);
+                    JavaCompletionItem i = JavaCompletionItem.createExecutableItem(info, method, (ExecutableType) method.asType()/*XXX*/, caretOffset, null, false, false, false, false, false, -1, false, null);
 
-                    resultSet.addItem(new MethodCompletionItem(i, r.getRelevance(), priority++));
+                    result.add(new MethodCompletionItem(i, r.getRelevance(), priority++));
                 }
         }
+
+        return result;
     }
 
     private static ExecutableElement resolveMethod(CompilationInfo info, IMethodName method) {
@@ -242,6 +250,11 @@ public class RecommenderCodeCompletion extends AsyncCompletionQuery {
         @Override
         public CharSequence getInsertPrefix() {
             return delegate.getInsertPrefix();
+        }
+
+        @Override
+        public String toString() {
+            return delegate.toString();
         }
 
     }
